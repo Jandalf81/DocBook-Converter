@@ -61,7 +61,7 @@
         Return retval
     End Function
 
-    Public Function convertXmlToFo(INFoSettings As FoSettings) As Integer
+    Public Function convertXMLtoFO(INFoSettings As FoSettings) As Integer
         Dim retval As Integer = 0
 
         log("Converting " & Me.Path & " to FO...")
@@ -71,15 +71,37 @@
         Dim filename As String = IO.Path.GetFileNameWithoutExtension(Me.Path)
         Dim fileext As String = IO.Path.GetExtension(Me.Path)
 
+        ' prepare stringparams to use in xsltproc.StartInfo.Arguments
+        ' list of all stringparams: http://docbook.sourceforge.net/release/xsl/current/doc/fo/
+        Dim stringparams As String = ""
+
+        'Document
+        stringparams += " --stringparam l10n.gentext.default.language " & INFoSettings.l10n_gentext_default_language
+
+        ' Body
+        stringparams += " --stringparam body.start.indent " & INFoSettings.body_start_indent & "mm"
+
+        ' TOC
+        stringparams += " --stringparam autotoc.label.separator """ & INFoSettings.autotoc_label_separator & """"
+
+        ' Chapter
+        stringparams += " --stringparam chapter.autolabel " & INFoSettings.chapter_autolabel
+
+        ' Section
+        stringparams += " --stringparam section.autolabel " & Convert.ToInt32(INFoSettings.section_autolabel)
+
+
+        stringparams += " --stringparam xref.with.number.and.title " & Convert.ToInt32(INFoSettings.xref_with_number_and_title)
+
+        ' prepare process
+        ' http://xmlsoft.org/XSLT/xsltproc.html
         Dim xsltproc As New Process()
         With xsltproc
             .StartInfo.FileName = My.Application.Info.DirectoryPath + "\xsltproc\xsltproc.exe"
-            .StartInfo.Arguments = "--xinclude --nonet --output """ & filepath & filename & ".fo"" """ & stylesheets & """ """ & Me.Path & """"
+            .StartInfo.Arguments = "--xinclude --nonet " & stringparams & " --output """ & filepath & filename & ".fo"" """ & stylesheets & """ """ & Me.Path & """"
             .StartInfo.CreateNoWindow = True
             .StartInfo.UseShellExecute = False
         End With
-
-        ' TODO add to ARGUMENTS: --stringparam section.autolabel 1 --stringparam xref.with.number.and.title 0 --stringparam body.start.indent 0mm
 
         log(vbTab & "CMD: " & xsltproc.StartInfo.FileName & " " & xsltproc.StartInfo.Arguments)
 
@@ -99,7 +121,7 @@
         Return retval
     End Function
 
-    Public Function convertFoToPDF() As Integer
+    Public Function convertFOtoPDF() As Integer
         Dim retval As Integer = 0
 
         Dim filepath As String = IO.Path.GetDirectoryName(Me.Path) & "\"
